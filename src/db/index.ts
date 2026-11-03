@@ -32,10 +32,22 @@ async function open(): Promise<Db> {
   return db as unknown as Db;
 }
 
+async function openAndSeed(): Promise<Db> {
+  const db = await open();
+  if (process.env.SEED_ON_START !== "false") {
+    const { seed } = await import("./seed");
+    await seed(db);
+  }
+  return db;
+}
+
 const globalForDb = globalThis as unknown as { __homeboundDb?: Promise<Db> };
 
 export function getDb(): Promise<Db> {
-  globalForDb.__homeboundDb ??= open();
+  globalForDb.__homeboundDb ??= openAndSeed().catch((err) => {
+    globalForDb.__homeboundDb = undefined;
+    throw err;
+  });
   return globalForDb.__homeboundDb;
 }
 
