@@ -1,7 +1,86 @@
 "use client";
 
+import { useState, useTransition } from "react";
 import type { ClientStage, ClientView } from "@/lib/client-view";
 import { formatNgn, formatUsd } from "@/lib/money";
+import { fundStageAction, refreshPaymentsAction, releaseLaborAction } from "@/app/actions/payments";
+
+function StageActions({ stage, hasPassingPhoto }: { stage: ClientStage; hasPassingPhoto: boolean }) {
+  const [pending, start] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+  const [override, setOverride] = useState("");
+  const funded = stage.fundedUsdCents >= stage.laborTrancheUsdCents;
+
+  const run = (fn: () => Promise<void>) =>
+    start(async () => {
+      setError(null);
+      setInfo(null);
+      await fn();
+    });
+
+  return (
+    <section className="flex flex-col gap-2">
+      {!funded ? (
+        <button
+          disabled={pending}
+          className="rounded-lg bg-laterite px-3 py-2 text-sm font-medium text-white hover:bg-laterite-dark disabled:opacity-60"
+          onClick={() =>
+            run(async () => {
+              const res = await fundStageAction(stage.id);
+              if (res.ok && res.data) window.location.href = res.data.approveUrl;
+              else if (!res.ok) setError(res.error);
+            })
+          }
+        >
+          {pending ? "Opening PayPal…" : `Fund ${formatUsd(stage.laborTrancheUsdCents)} with PayPal`}
+        </button>
+      ) : null}
+
+      {funded && stage.status !== "paid" ? (
+        <>
+          {!hasPassingPhoto ? (
+            <textarea
+              value={override}
+              onChange={(e) => setOverride(e.target.value)}
+              placeholder="No photo has passed verification. To release anyway, write why (this is recorded in the ledger)."
+              className="min-h-16 rounded-lg border border-sand p-2 text-sm"
+            />
+          ) : null}
+          <button
+            disabled={pending || (!hasPassingPhoto && !override.trim())}
+            className="rounded-lg bg-palm px-3 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+            onClick={() =>
+              run(async () => {
+                const res = await releaseLaborAction(stage.id, hasPassingPhoto ? undefined : override);
+                if (!res.ok) setError(res.error);
+                else setInfo("Payout sent through PayPal. Status updates when PayPal confirms.");
+              })
+            }
+          >
+            {pending ? "Sending payout…" : `Approve & pay contractor ${formatUsd(stage.laborTrancheUsdCents)}`}
+          </button>
+        </>
+      ) : null}
+
+      <button
+        disabled={pending}
+        className="self-start text-xs text-muted underline-offset-2 hover:underline"
+        onClick={() =>
+          run(async () => {
+            const res = await refreshPaymentsAction();
+            if (!res.ok) setError(res.error);
+            else setInfo(`Checked ${res.data?.checked ?? 0} open payments with PayPal, ${res.data?.updated ?? 0} updated.`);
+          })
+        }
+      >
+        Refresh payment status from PayPal
+      </button>
+      {error ? <p className="rounded-lg bg-red-50 p-2 text-sm text-red-800">{error}</p> : null}
+      {info ? <p className="rounded-lg bg-emerald-50 p-2 text-sm text-emerald-900">{info}</p> : null}
+    </section>
+  );
+}
 
 const STATUS_LABEL: Record<string, string> = {
   planned: "Planned",
@@ -65,6 +144,12 @@ export default function StagePanel({ view, stage }: { view: ClientView; stage: C
           <span>{formatUsd(stage.laborPaidUsdCents)}</span>
         </div>
       </section>
+
+      <StageActions
+        key={stage.id}
+        stage={stage}
+        hasPassingPhoto={evidence.some((e) => e.kind === "photo" && e.verdict?.verdict === "pass")}
+      />
 
       <section>
         <h3 className="text-sm font-semibold">What counts as done</h3>
