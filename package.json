@@ -12,6 +12,7 @@
     "@bryntum/gantt": "npm:@bryntum/gantt-trial@^7.3.8",
     "@bryntum/gantt-react": "^7.3.8",
     "@electric-sql/pglite": "^0.5.15",
+    "@paypal/paypal-server-sdk": "^2.5.0",
     "ag-grid-community": "^36.2.0",
     "ag-grid-react": "^36.2.0",
     "drizzle-orm": "^0.45.4",
