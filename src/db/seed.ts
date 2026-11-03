@@ -216,7 +216,7 @@ export async function seed(db: Db): Promise<void> {
   const stageRows: (typeof stages.$inferSelect)[] = [];
   for (const [i, s] of HERO_STAGES.entries()) {
     const status = i === 0 ? "paid" : i === 1 ? "funded" : "planned";
-    const [row] = await db
+    const [row]: (typeof stages.$inferSelect)[] = await db
       .insert(stages)
       .values({
         projectId: hero.id,
