@@ -69,7 +69,11 @@ export default function StageGantt({
   selectedStageId: string | null;
   onSelectStage: (stageId: string | null) => void;
 }) {
-  const { tasks, dependencies } = useMemo(() => {
+  const dataKey = stages
+    .map((s) => `${s.id}:${s.status}:${s.fundedUsdCents}:${s.laborPaidUsdCents}:${s.startDate}:${s.durationDays}`)
+    .join("|");
+
+  const project = useMemo(() => {
     const tasks = stages.flatMap((s) => {
       const gate = gateState(s);
       return [
@@ -104,19 +108,10 @@ export default function StageGantt({
       if (next) deps.push({ id: `d-gs-${s.id}`, fromTask: `g-${s.id}`, toTask: `s-${next.id}` });
       return deps;
     });
-    return { tasks, dependencies };
-  }, [stages]);
-
-  const project = useMemo(
-    () => ({
-      startDate: stages[0]?.startDate,
-      taskModelClass: StageTask,
-      tasksData: tasks,
-      dependenciesData: dependencies,
-    }),
-    [stages, tasks, dependencies],
-  );
-  const dataKey = stages.map((s) => `${s.id}:${s.status}:${s.fundedUsdCents}`).join("|");
+    return { startDate: stages[0]?.startDate, taskModelClass: StageTask, tasks, dependencies };
+    // Bryntum re-applies the project config whenever its identity changes, so rebuild only when the data does.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataKey]);
 
   return (
     <BryntumGantt
