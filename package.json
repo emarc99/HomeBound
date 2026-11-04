@@ -9,18 +9,24 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@ai-sdk/google": "^4.0.111",
     "@bryntum/gantt": "npm:@bryntum/gantt-trial@^7.3.8",
     "@bryntum/gantt-react": "^7.3.8",
+    "@channel3/sdk": "^4.6.0",
+    "@elastic/elasticsearch": "^9.5.1",
     "@electric-sql/pglite": "^0.5.15",
     "@paypal/paypal-server-sdk": "^2.5.0",
     "ag-grid-community": "^36.2.0",
     "ag-grid-react": "^36.2.0",
+    "ai": "^7.0.162",
     "drizzle-orm": "^0.45.4",
+    "exifr": "^7.1.3",
     "next": "16.4.4",
     "postgres": "^4.0.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "server-only": "^0.0.1",
+    "sharp": "^0.35.5",
     "zod": "^4.6.7"
   },
   "devDependencies": {
