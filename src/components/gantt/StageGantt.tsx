@@ -56,6 +56,8 @@ class StageTask extends TaskModel {
 function gateState(s: ClientStage): { label: string; color: string } {
   if (s.status === "paid") return { label: "released", color: "green" };
   if (s.status === "blocked") return { label: "blocked", color: "red" };
+  if (s.status === "verified") return { label: "proof verified, ready to release", color: "teal" };
+  if (s.status === "evidence_submitted") return { label: "proof needs review", color: "orange" };
   if (s.fundedUsdCents >= s.laborTrancheUsdCents) return { label: "funded, awaiting proof", color: "orange" };
   return { label: "not funded", color: "gray" };
 }
