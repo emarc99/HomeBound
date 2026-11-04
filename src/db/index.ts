@@ -38,6 +38,8 @@ async function openAndSeed(): Promise<Db> {
     const { seed } = await import("./seed");
     await seed(db);
   }
+  const { syncSandboxPayees } = await import("./seed");
+  await syncSandboxPayees(db);
   return db;
 }
 

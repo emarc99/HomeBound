@@ -1,5 +1,5 @@
 import "server-only";
-import { count } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import type { Db } from "./index";
 import {
   projects,
@@ -9,6 +9,7 @@ import {
   payments,
   priceObservations,
   inspections,
+  type PartyRole,
 } from "./schema";
 import { CATALOG, CITY_FACTORS, catalogItem } from "./catalog";
 import { appendLedger } from "@/lib/ledger";
@@ -132,6 +133,17 @@ const OTHER_PROJECTS = [
 
 function quotePrice(base: number): number {
   return Math.round((base * 1.05) / 50) * 50;
+}
+
+export async function syncSandboxPayees(db: Db): Promise<void> {
+  const byRole: [PartyRole, string | undefined][] = [
+    ["contractor", process.env.SANDBOX_CONTRACTOR_EMAIL],
+    ["supplier", process.env.SANDBOX_SUPPLIER_EMAIL],
+    ["inspector", process.env.SANDBOX_INSPECTOR_EMAIL],
+  ];
+  for (const [role, email] of byRole) {
+    if (email) await db.update(parties).set({ paypalEmail: email }).where(eq(parties.role, role));
+  }
 }
 
 export async function isSeeded(db: Db): Promise<boolean> {
