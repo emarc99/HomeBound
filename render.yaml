@@ -1,0 +1,74 @@
+services:
+  - type: web
+    name: homebound
+    runtime: node
+    region: frankfurt
+    plan: 0.5c-512mb
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: homebound-db
+          property: connectionString
+      - key: SEED_ON_START
+        value: "true"
+      - key: PAYPAL_ENVIRONMENT
+        value: SANDBOX
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      # Leave empty on first deploy; set after registering the webhook URL with PayPal
+      - key: PAYPAL_WEBHOOK_ID
+        sync: false
+      - key: SANDBOX_CONTRACTOR_EMAIL
+        sync: false
+      - key: SANDBOX_SUPPLIER_EMAIL
+        sync: false
+      - key: SANDBOX_INSPECTOR_EMAIL
+        sync: false
+      - key: CRON_SECRET
+        generateValue: true
+      - key: GOOGLE_GENERATIVE_AI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.8-flash
+      - key: GEMINI_FALLBACK_MODELS
+        value: gemini-3.7-flash,gemini-3.6-flash,gemini-3.5-flash
+      - key: ELASTICSEARCH_URL
+        sync: false
+      - key: ELASTICSEARCH_API_KEY
+        sync: false
+      - key: CHANNEL3_API_KEY
+        sync: false
+
+  # Catches payouts whose webhook never arrived (PayPal sandbox webhooks are best-effort)
+  - type: cron
+    name: homebound-reconcile
+    runtime: node
+    region: frankfurt
+    plan: 0.5c-512mb
+    schedule: "*/15 * * * *"
+    buildCommand: "true"
+    startCommand: 'curl -fsS -X POST -H "Authorization: Bearer $CRON_SECRET" "http://$APP_HOSTPORT/api/cron/reconcile"'
+    envVars:
+      - key: CRON_SECRET
+        fromService:
+          name: homebound
+          type: web
+          envVarKey: CRON_SECRET
+      - key: APP_HOSTPORT
+        fromService:
+          name: homebound
+          type: web
+          property: hostport
+
+databases:
+  - name: homebound-db
+    databaseName: homebound
+    region: frankfurt
+    plan: 0.1c-256mb
