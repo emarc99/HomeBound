@@ -23,8 +23,10 @@ type PayoutBatchResponse = {
   }[];
 };
 
+/** `attemptId` must be new for each deliberate retry: PayPal rejects a reused sender_batch_id for 30 days. */
 export async function sendPayout(input: {
   paymentId: string;
+  attemptId: string;
   receiverEmail: string;
   amountUsd: string;
   note: string;
@@ -32,10 +34,10 @@ export async function sendPayout(input: {
 }): Promise<{ batchId: string; batchStatus: string }> {
   const res = await paypalFetch<PayoutBatchResponse>("/v1/payments/payouts", {
     method: "POST",
-    requestId: `payout-${input.paymentId}`,
+    requestId: `payout-${input.attemptId}`,
     body: {
       sender_batch_header: {
-        sender_batch_id: input.paymentId,
+        sender_batch_id: input.attemptId,
         email_subject: input.subject,
         email_message: input.note,
       },

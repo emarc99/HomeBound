@@ -155,6 +155,7 @@ async function payout(
 
   const res = await sendPayout({
     paymentId: payment.id,
+    attemptId: existing?.payoutBatchId ? `${payment.id}-after-${existing.payoutBatchId}` : payment.id,
     receiverEmail: payee.paypalEmail,
     amountUsd: centsToUsdString(input.amountUsdCents),
     note: input.note,
