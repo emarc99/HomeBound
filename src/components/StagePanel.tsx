@@ -5,7 +5,15 @@ import type { ClientStage, ClientView } from "@/lib/client-view";
 import { formatNgn, formatUsd } from "@/lib/money";
 import { fundStageAction, refreshPaymentsAction, releaseLaborAction } from "@/app/actions/payments";
 
-function StageActions({ stage, hasPassingPhoto }: { stage: ClientStage; hasPassingPhoto: boolean }) {
+function StageActions({
+  stage,
+  hasPassingPhoto,
+  laborInFlight,
+}: {
+  stage: ClientStage;
+  hasPassingPhoto: boolean;
+  laborInFlight: boolean;
+}) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -37,7 +45,13 @@ function StageActions({ stage, hasPassingPhoto }: { stage: ClientStage; hasPassi
         </button>
       ) : null}
 
-      {funded && stage.status !== "paid" ? (
+      {funded && stage.status !== "paid" && laborInFlight ? (
+        <p className="rounded-lg bg-amber-50 p-2 text-sm text-amber-900">
+          Labor payout is with PayPal. Refresh to check whether it has landed.
+        </p>
+      ) : null}
+
+      {funded && stage.status !== "paid" && !laborInFlight ? (
         <>
           {!hasPassingPhoto ? (
             <textarea
@@ -149,6 +163,7 @@ export default function StagePanel({ view, stage }: { view: ClientView; stage: C
         key={stage.id}
         stage={stage}
         hasPassingPhoto={evidence.some((e) => e.kind === "photo" && e.verdict?.verdict === "pass")}
+        laborInFlight={payments.some((p) => p.kind === "labor" && ["created", "pending", "unclaimed"].includes(p.status))}
       />
 
       <section>
