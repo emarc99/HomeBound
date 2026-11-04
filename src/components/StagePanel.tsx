@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import type { ClientStage, ClientView } from "@/lib/client-view";
 import { formatNgn, formatUsd } from "@/lib/money";
 import { fundStageAction, refreshPaymentsAction, releaseLaborAction } from "@/app/actions/payments";
+import EvidencePanel from "./EvidencePanel";
 
 function StageActions({
   stage,
@@ -171,28 +172,7 @@ export default function StagePanel({ view, stage }: { view: ClientView; stage: C
         <p className="mt-1 text-sm">{stage.acceptanceCriteria}</p>
       </section>
 
-      <section>
-        <h3 className="text-sm font-semibold">Evidence</h3>
-        {evidence.length === 0 ? (
-          <p className="mt-1 text-sm text-muted">No photos or reports yet.</p>
-        ) : (
-          <ul className="mt-2 flex flex-col gap-2">
-            {evidence.map((e) => (
-              <li key={e.id} className="rounded-lg border border-sand p-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="font-medium capitalize">{e.kind.replace("_", " ")}</span>
-                  {e.verdict ? (
-                    <Pill tone={e.verdict.verdict === "pass" ? "good" : e.verdict.verdict === "fail" ? "bad" : "warn"}>
-                      AI: {e.verdict.verdict.replace("_", " ")}
-                    </Pill>
-                  ) : null}
-                </div>
-                {e.verdict?.observations?.[0] ? <p className="mt-1 text-muted">{e.verdict.observations[0]}</p> : null}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <EvidencePanel stage={stage} evidence={evidence} />
 
       <section>
         <h3 className="text-sm font-semibold">Payments</h3>
