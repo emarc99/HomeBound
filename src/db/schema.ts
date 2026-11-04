@@ -8,7 +8,13 @@ import {
   jsonb,
   uniqueIndex,
   index,
+  customType,
 } from "drizzle-orm/pg-core";
+
+const bytea = customType<{ data: Buffer; driverData: Uint8Array }>({
+  dataType: () => "bytea",
+  fromDriver: (v) => Buffer.from(v),
+});
 
 const id = () => text("id").primaryKey().$defaultFn(() => crypto.randomUUID());
 const createdAt = () => timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
@@ -169,6 +175,14 @@ export const evidence = pgTable(
   },
   (t) => [index("evidence_project_idx").on(t.projectId), index("evidence_stage_idx").on(t.stageId)],
 );
+
+export const blobs = pgTable("blobs", {
+  key: text("key").primaryKey(),
+  mime: text("mime").notNull(),
+  bytes: integer("bytes").notNull(),
+  data: bytea("data").notNull(),
+  createdAt: createdAt(),
+});
 
 export type PaymentKind = "funding" | "labor" | "material" | "inspection";
 export type PaymentStatus = "created" | "pending" | "completed" | "failed" | "unclaimed" | "returned" | "refunded";
