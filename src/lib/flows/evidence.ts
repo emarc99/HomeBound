@@ -15,6 +15,7 @@ export const CHECK = {
   place: "Taken at the site",
   reuse: "Not a reused photo",
   ai: "Shows what counts as done",
+  genuine: "Looks like a real site photo",
 } as const;
 
 const NEAR_DUPLICATE_BITS = 6;
@@ -119,8 +120,11 @@ export async function submitStagePhoto(input: { stageId: string; file: Buffer; u
   })();
 
   const [reuse, ai] = await Promise.all([reuseCheck, aiCheck]);
-  const checks = [ai.check, placeCheck, timeCheck, reuse];
   const a = ai.assessment;
+  const genuineCheck: Check = !a
+    ? { name: CHECK.genuine, status: "unavailable", detail: "Needs the AI review to judge." }
+    : { name: CHECK.genuine, status: a.authenticity === "genuine_site_photo" ? "pass" : "fail", detail: a.authenticityNote };
+  const checks = [ai.check, genuineCheck, placeCheck, timeCheck, reuse];
 
   const integrityFailed = [placeCheck, timeCheck, reuse].some((c) => c.status === "fail");
   const verdict: EvidenceVerdict["verdict"] = !a
