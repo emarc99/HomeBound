@@ -3,7 +3,9 @@ services:
     name: homebound
     runtime: node
     region: frankfurt
-    plan: 0.5c-512mb
+    plan: free
+    # Builds take several minutes; deploy manually so every push doesn't spend build minutes
+    autoDeployTrigger: "off"
     buildCommand: npm ci && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
@@ -46,29 +48,11 @@ services:
       - key: CHANNEL3_API_KEY
         sync: false
 
-  # Catches payouts whose webhook never arrived (PayPal sandbox webhooks are best-effort)
-  - type: cron
-    name: homebound-reconcile
-    runtime: node
-    region: frankfurt
-    plan: 0.5c-512mb
-    schedule: "*/15 * * * *"
-    buildCommand: "true"
-    startCommand: 'curl -fsS -X POST -H "Authorization: Bearer $CRON_SECRET" "http://$APP_HOSTPORT/api/cron/reconcile"'
-    envVars:
-      - key: CRON_SECRET
-        fromService:
-          name: homebound
-          type: web
-          envVarKey: CRON_SECRET
-      - key: APP_HOSTPORT
-        fromService:
-          name: homebound
-          type: web
-          property: hostport
+# The payout reconcile schedule runs from .github/workflows/reconcile.yml (Render cron jobs have no free plan)
 
 databases:
+  # Free Render Postgres is deleted 30 days after creation; switch to 0.1c-256mb before then
   - name: homebound-db
     databaseName: homebound
     region: frankfurt
-    plan: 0.1c-256mb
+    plan: free
