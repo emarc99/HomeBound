@@ -5,10 +5,14 @@ const nextConfig: NextConfig = {
   logging: { browserToTerminal: false },
   experimental: {
     serverActions: { bodySizeLimit: "13mb" },
+    serverSourceMaps: false,
+    turbopackSourceMaps: false,
+    turbopackMemoryEviction: "full",
   },
   turbopack: {
     rules: {
       "*.css": {
+        condition: { not: "foreign" },
         loaders: ["@tailwindcss/turbopack"],
         as: "*.css",
       },
